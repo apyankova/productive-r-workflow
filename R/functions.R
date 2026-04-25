@@ -10,6 +10,7 @@ create_scatterplot <- function(data, selected_species, col_vec) {
     aes(x = bill_length_mm, y = bill_depth_mm, color= species)
   ) +
     geom_point() +
+    scale_y_continuous(limits = c(12, 22))+
     scale_color_manual(values = col_vec) +  
     labs(
       x = "Bill Length (mm)",

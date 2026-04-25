@@ -172,4 +172,4 @@ p1 + p2 + p3
 
 ## Conclusion
 
-Thus we realize three distinct group of penguin. Within each of them we see positive correlation between `bill length` and `bill depth` unlike within among all of them simultaneously as shown in [section 3](#section-3) 
+Thus we've realize three distinct group of penguin. Within each of them we see positive correlation between `bill length` and `bill depth` unlike without splitting by groups as shown in [section 3](#section-3) 
