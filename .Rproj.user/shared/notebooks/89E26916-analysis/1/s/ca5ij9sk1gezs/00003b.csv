@@ -1,0 +1,4 @@
+"0","#| layout-ncol: 2"
+"0","data %>%"
+"0","  group_by(species) %>%"
+"0","  summarise(mean_length = round(mean(bill_length_mm, na.rm = TRUE), 1))"

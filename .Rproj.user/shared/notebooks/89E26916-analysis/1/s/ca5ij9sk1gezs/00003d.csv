@@ -1,0 +1,3 @@
+"0","data %>%"
+"0","  group_by(species) %>%"
+"0","  summarise(mean_depth = round(mean(bill_depth_mm, na.rm = TRUE), 1))"

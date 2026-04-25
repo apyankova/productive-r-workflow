@@ -1,0 +1,175 @@
+---
+title: "Exploring Simpson's paradox within the Penguin dataset"
+subtitle: "and demosntrating the capabilities of Quardo"
+title-block-banner: "#C3C7F9"
+title-block-banner-color: "black"
+
+author: 
+ name: "Anastasiya Piyankova"
+ affiliation: "HSE"
+ orcid: "https://orcid.org/0000-0002-2633-2789"
+ email: "amahotkina@gmail.com"
+
+keywords: "Quardo, Spurious correlations, Simpson's paradox" 
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Content"
+    number-sections: true
+    toc-location: left
+    code-fold: true
+    code-summary: "Show the code"
+editor: source
+fig-cap-location: margin
+---
+
+::: {.callout-note collapse="true"}
+## A few consideration about this doc
+This Quarto document serves as a practical illustration of the concepts covered in the productive workflow online course. It's designed primarily for _educational purposes_, so the focus is on demonstrating Quarto techniques rather than on the rigor of its scientific content.
+:::
+
+## Introduction
+
+This document offers a straightforward analysis of the well-known penguin dataset. You could read about this new **fantastic** dataset [here](https://allisonhorst.github.io/palmerpenguins/).
+
+Let's load the libraries *now*!
+ 
+```{r, message = FALSE, warning=FALSE}
+# Load packages
+library(tidyverse)
+library(patchwork)
+library(tinytex)
+library(DT)
+library(knitr)
+library(plotly)
+library(hrbrthemes)
+```
+ 
+## Loading data and function
+
+Here we are loading already cleaned data, that we previously processed. The original format was `exls`.
+Let's load that clean version, with a few functions available in `functions.R`.
+
+```{r, message = FALSE, warning=FALSE}
+# Source functions
+source(file = "functions.R")
+# Read the clean dataset
+data <- readRDS(file = "../input/clean_data.rds")
+```
+
+Note that `bill_length_mm` and `bill_depth_mm` have the following signification.
+
+![Bill measurement explanation](asset/culmen_depth.png){width=300}
+
+In case you’re wondering how the original dataset looks like, here is a searchable version of it, made using the `DT` package:
+
+```{r, message = FALSE, warning=FALSE}
+datatable(data, filter="top")
+```
+
+## Bill length and depth {#section-3}
+
+Now, let's make some descriptive analysis, including **summary statistics** and **graphs**. 
+What's striking is the  *slightly negative relationship* between `bill length`and`bill depth`:
+ 
+```{r, message = FALSE, warning=FALSE, fig.width = 5, fig.height = 5, fig.align='center'}
+#Custom theme
+AnastasiyaP_theme <- function() {
+  theme_ipsum() +
+    theme(
+      plot.title = element_text(color = "#29266D", hjust=0.5, size = 16, face = "bold"),
+      axis.text.x = element_text(size = 8),
+      axis.text.y = element_text(size = 8),
+      legend.position = "none",
+      axis.line.x = element_line(size = 0.5, colour = "grey40", linetype=1),
+      axis.line.y = element_line(size = 0.5, colour = "grey40", linetype=1),
+      plot.margin = margin(20,20,30,20)
+    )
+}
+
+p <- data %>%
+  ggplot(
+    aes(x = bill_length_mm, y = bill_depth_mm)
+  ) +
+  geom_point(color = "#69b3a2") +
+  labs(
+    x = "Bill length",
+    y = "Bill depth",
+    title = paste("Surprising relationship?")
+  ) +
+  AnastasiyaP_theme() 
+
+ggplotly(p)
+```
+
+## Split your data by group 
+
+Maybe it's **Simpson's paradox**^[Simpson’s paradox, or the Yule–Simpson effect, is a phenomenon in probability and statistics, in which a trend appears in several different groups of data but disappears or reverses when these groups are combined.read more [here](https://en.wikipedia.org/wiki/Simpson%27s_paradox)]? Let's look at the plot by species.
+
+```{r, message = FALSE, warning=FALSE, fig.width = 5, fig.height = 5, fig.align='center'}
+col_vec <- c(
+  "Adelie" = "#FFAC31",
+  "Chinstrap" = "#777CD3",
+  "Gentoo" = "#343188"
+)
+
+pp <- data %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point() +
+  scale_color_manual(values = col_vec) +
+  labs(
+    x = "Bill length",
+    y = "Bill depth",
+    title = "There isn't surprising relationship"
+  ) +
+  AnastasiyaP_theme() 
+
+ggplotly(pp)
+```
+
+It is also interesting to note that `bill length` and `bill depth` are quite different from one specie to another. 
+
+The average of a variable can be computed as follow:
+$${\displaystyle Avg={\frac {1}{n}}\sum _{i=1}^{n}a_{i}={\frac {a_{1}+a_{2}+\cdots +a_{n}}{n}}}$$
+The average's of length and depth by species  are  summarized in the table below:
+
+```{r}
+bill_length_depth_mean <-  data %>%
+  group_by(species) %>%
+  summarise(mean_length = round(mean(bill_length_mm, na.rm = TRUE), 1),
+            mean_depth = round(mean(bill_depth_mm, na.rm = TRUE), 1))
+
+# Display in the Quarto report
+kable(bill_length_depth_mean)
+
+# Calculating specie's specific mean 
+bill_length_adelie <- data %>%
+  group_by(species) %>% 
+  summarise(average_bill_length = mean(bill_length_mm, na.rm= TRUE)) %>% 
+  filter(species == "Adelie") %>% 
+  pull(average_bill_length) %>% 
+  round(1)
+```
+
+For instance, the average bill length for the specie `Adelie` is `r bill_length_adelie`.
+
+Now, let's check the relationship between bill depth and bill length for each  species separately. 
+
+```{r, message = FALSE, warning=FALSE, fig.width = 9, fig.height = 3, fig.align='center', fig.cap="There is relationship between bill **length** and bill **depth**, when you split data by species."}
+
+# Use the function in functions.R
+p1 <- create_scatterplot(data, "Adelie", col_vec)+
+  AnastasiyaP_theme()
+p2 <- create_scatterplot(data, "Chinstrap", col_vec)+ 
+  AnastasiyaP_theme()
+p3 <- create_scatterplot(data, "Gentoo", col_vec)+ 
+  AnastasiyaP_theme()
+
+p1 + p2 + p3
+```
+
+## Conclusion
+
+Thus we realize three distinct group of penguin. Within each of them we see positive correlation between `bill length` and `bill depth` unlike within among all of them simultaneously as shown in [section 3](#section-3) 
