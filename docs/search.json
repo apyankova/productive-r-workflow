@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "R/analysis.html",
+    "href": "R/analysis.html",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "",
+    "text": "NoteA few consideration about this doc\n\n\n\n\n\nThis Quarto document serves as a practical illustration of the concepts covered in the productive workflow online course. It’s designed primarily for educational purposes, so the focus is on demonstrating Quarto techniques rather than on the rigor of its scientific content."
+  },
+  {
+    "objectID": "R/analysis.html#introduction",
+    "href": "R/analysis.html#introduction",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "1 Introduction",
+    "text": "1 Introduction\nThis document offers a straightforward analysis of the well-known penguin dataset. You could read about this new fantastic dataset here.\nLet’s load the libraries now!\n\n\nShow the code\n# Load packages\nlibrary(tidyverse)\nlibrary(patchwork)\nlibrary(tinytex)\nlibrary(DT)\nlibrary(knitr)\nlibrary(plotly)\nlibrary(hrbrthemes)"
+  },
+  {
+    "objectID": "R/analysis.html#loading-data-and-function",
+    "href": "R/analysis.html#loading-data-and-function",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "2 Loading data and function",
+    "text": "2 Loading data and function\nHere we are loading already cleaned data, that we previously processed. The original format was exls. Let’s load that clean version, with a few functions available in functions.R.\n\n\nShow the code\n# Source functions\nsource(file = \"functions.R\")\n# Read the clean dataset\ndata &lt;- readRDS(file = \"../input/clean_data.rds\")\n\n\nNote that bill_length_mm and bill_depth_mm have the following signification.\n\n\n\nBill measurement explanation\n\n\nIn case you’re wondering how the original dataset looks like, here is a searchable version of it, made using the DT package:\n\n\nShow the code\ndatatable(data, filter=\"top\")"
+  },
+  {
+    "objectID": "R/analysis.html#section-3",
+    "href": "R/analysis.html#section-3",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "3 Bill length and depth",
+    "text": "3 Bill length and depth\nNow, let’s make some descriptive analysis, including summary statistics and graphs. What’s striking is the slightly negative relationship between bill lengthandbill depth:\n\n\nShow the code\n#Custom theme\nAnastasiyaP_theme &lt;- function() {\n  theme_ipsum() +\n    theme(\n      plot.title = element_text(color = \"#29266D\", hjust=0.5, size = 16, face = \"bold\"),\n      axis.text.x = element_text(size = 8),\n      axis.text.y = element_text(size = 8),\n      legend.position = \"none\",\n      axis.line.x = element_line(size = 0.5, colour = \"grey40\", linetype=1),\n      axis.line.y = element_line(size = 0.5, colour = \"grey40\", linetype=1),\n      plot.margin = margin(20,20,30,20)\n    )\n}\n\np &lt;- data %&gt;%\n  ggplot(\n    aes(x = bill_length_mm, y = bill_depth_mm)\n  ) +\n  geom_point(color = \"#69b3a2\") +\n  labs(\n    x = \"Bill length\",\n    y = \"Bill depth\",\n    title = paste(\"Surprising relationship?\")\n  ) +\n  AnastasiyaP_theme() \n\nggplotly(p)"
+  },
+  {
+    "objectID": "R/analysis.html#split-your-data-by-group",
+    "href": "R/analysis.html#split-your-data-by-group",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "4 Split your data by group",
+    "text": "4 Split your data by group\nMaybe it’s Simpson’s paradox1? Let’s look at the plot by species.\n\n\nShow the code\ncol_vec &lt;- c(\n  \"Adelie\" = \"#FFAC31\",\n  \"Chinstrap\" = \"#777CD3\",\n  \"Gentoo\" = \"#343188\"\n)\n\npp &lt;- data %&gt;%\n  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +\n  geom_point() +\n  scale_color_manual(values = col_vec) +\n  labs(\n    x = \"Bill length\",\n    y = \"Bill depth\",\n    title = \"There isn't surprising relationship\"\n  ) +\n  AnastasiyaP_theme() \n\nggplotly(pp)\n\n\n\n\n\n\nIt is also interesting to note that bill length and bill depth are quite different from one specie to another.\nThe average of a variable can be computed as follow: \\[{\\displaystyle Avg={\\frac {1}{n}}\\sum _{i=1}^{n}a_{i}={\\frac {a_{1}+a_{2}+\\cdots +a_{n}}{n}}}\\] The average’s of length and depth by species are summarized in the table below:\n\n\nShow the code\nbill_length_depth_mean &lt;-  data %&gt;%\n  group_by(species) %&gt;%\n  summarise(mean_length = round(mean(bill_length_mm, na.rm = TRUE), 1),\n            mean_depth = round(mean(bill_depth_mm, na.rm = TRUE), 1))\n\n# Display in the Quarto report\nkable(bill_length_depth_mean)\n\n\n\n\n\nspecies\nmean_length\nmean_depth\n\n\n\n\nAdelie\n38.8\n18.3\n\n\nChinstrap\n48.8\n18.4\n\n\nGentoo\n47.5\n15.0\n\n\n\n\n\nShow the code\n# Calculating specie's specific mean \nbill_length_adelie &lt;- data %&gt;%\n  group_by(species) %&gt;% \n  summarise(average_bill_length = mean(bill_length_mm, na.rm= TRUE)) %&gt;% \n  filter(species == \"Adelie\") %&gt;% \n  pull(average_bill_length) %&gt;% \n  round(1)\n\n\nFor instance, the average bill length for the specie Adelie is 38.8.\nNow, let’s check the relationship between bill depth and bill length for each species separately.\n\n\nShow the code\n# Use the function in functions.R\np1 &lt;- create_scatterplot(data, \"Adelie\", col_vec)+\n  AnastasiyaP_theme()+theme(axis.title.x = element_blank())\np2 &lt;- create_scatterplot(data, \"Chinstrap\", col_vec)+ \n  AnastasiyaP_theme()+theme(axis.title.x = element_blank())\np3 &lt;- create_scatterplot(data, \"Gentoo\", col_vec)+ \n  AnastasiyaP_theme()+theme(axis.title.x = element_blank())\n\n(p1 + p2 + p3)+\n  plot_annotation(\n    caption = \"Bill length (mm)\"\n  ) &\n  theme(plot.caption = element_text(hjust = 0.5))\n\n\n\n\n\nThere is relationship between bill length and bill depth, when you split data by species."
+  },
+  {
+    "objectID": "R/analysis.html#conclusion",
+    "href": "R/analysis.html#conclusion",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "5 Conclusion",
+    "text": "5 Conclusion\nThus we’ve realize three distinct group of penguin. Within each of them we see positive correlation between bill length and bill depth unlike without splitting by groups as shown in section 3"
+  },
+  {
+    "objectID": "R/analysis.html#footnotes",
+    "href": "R/analysis.html#footnotes",
+    "title": "Exploring Simpson’s paradox within the Penguin dataset",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSimpson’s paradox, or the Yule–Simpson effect, is a phenomenon in probability and statistics, in which a trend appears in several different groups of data but disappears or reverses when these groups are combined.read more here↩︎"
+  },
+  {
+    "objectID": "R/test.html",
+    "href": "R/test.html",
+    "title": "Test Doc",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+  },
+  {
+    "objectID": "R/test.html#quarto",
+    "href": "R/test.html#quarto",
+    "title": "Test Doc",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+  },
+  {
+    "objectID": "R/test.html#running-code",
+    "href": "R/test.html#running-code",
+    "title": "Test Doc",
+    "section": "Running Code",
+    "text": "Running Code\nWhen you click the Render button a document will be generated that includes both content and the output of embedded code. You can embed code like this:\n\n1 + 1\n\n[1] 2\n\n\nYou can add options to executable code like this\n\n\n[1] 4\n\n\nThe echo: false option disables the printing of code (only output is displayed)."
+  }
+]
